@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "airton_ac"
+version = "1.0.0"
+description = "Control an Airton AC device over LAN."
+authors = ["Gabriel Pajot <gab@les-cactus.co>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/gpajot/airton-ac"
+include = ["airton_ac/py.typed"]
+
+[tool.poetry.dependencies]
+python = ">=3.7,<3.11"
+
+tinytuya = "==1.7.1"
+
+[tool.poetry.group.test.dependencies]
+flake8 = "^5"
+black = "^22"
+isort = "^5"
+pre-commit = "^2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.isort]
+profile = "black"
