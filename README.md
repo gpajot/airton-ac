@@ -22,9 +22,10 @@ To get those, follow instructions from [TinyTuya](https://github.com/jasonacox/t
 > - Data center should be `Central Europe Data Center`.
 
 After having run the wizard, you can run `python -m tinytuya scan` to get a summary of devices.
-Once you have the information you can unlink the devices from the SmartLife app and delete your accounts.
 
-> ⚠️ Keep in mind that if you reset or re-pair devices the local key will change.
+> ⚠️ Keep in mind that:
+> - if you reset or re-pair devices the local key will change
+> - you can delete your tuya IOT account but not the SmartLife one and devices should be kept there
 
 ### Domoticz plugin
 The plugin requires having fetched device information using instructions above.
