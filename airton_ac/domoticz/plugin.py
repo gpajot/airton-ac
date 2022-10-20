@@ -24,9 +24,12 @@
     </params>
 </plugin>
 """
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-import DomoticzEx
+if TYPE_CHECKING:
+    from airton_ac.domoticz.types import Devices, DomoticzEx, Parameters
+else:
+    import DomoticzEx
 
 import airton_ac as ac
 from airton_ac.domoticz import Device, Heartbeat
@@ -41,7 +44,7 @@ def onStart():
     device = Device(
         name=name,
         lan_device=ac.Device(
-            id=Parameters["Username"],
+            _id=Parameters["Username"],
             address=Parameters["Address"],
             local_key=Parameters["Password"],
         ),

@@ -1,7 +1,10 @@
 from enum import IntEnum
-from typing import ClassVar, Dict, Type
+from typing import TYPE_CHECKING, Dict, Type
 
-import DomoticzEx
+if TYPE_CHECKING:
+    from airton_ac.domoticz.types import DomoticzEx
+else:
+    import DomoticzEx
 
 import airton_ac.device as lan
 from airton_ac.domoticz.units import (
@@ -37,7 +40,9 @@ class Mode(Options):
     DRY = 40
     VENT = 50
 
-    AC_ENUM: ClassVar[Type[lan.Mode]] = lan.Mode
+    @property
+    def ac(self) -> Type[lan.Mode]:
+        return lan.Mode
 
 
 class FanSpeed(Options):
@@ -51,7 +56,9 @@ class FanSpeed(Options):
     L5 = 70
     TURBO = 80
 
-    AC_ENUM: ClassVar[lan.FanSpeed] = lan.FanSpeed
+    @property
+    def ac(self) -> Type[lan.FanSpeed]:
+        return lan.FanSpeed
 
 
 class Device:
@@ -65,46 +72,48 @@ class Device:
                 id=UnitId.POWER,
                 image=9,
                 name="power",
-                unit=units.get(UnitId.POWER),
+                _unit=units.get(UnitId.POWER),
                 command_func=lan_device.set_power,
             ),
             UnitId.SET_POINT: SetPointUnit(
                 device_name=name,
                 id=UnitId.SET_POINT,
                 name="set point",
-                unit=units.get(UnitId.SET_POINT),
+                image=0,
+                _unit=units.get(UnitId.SET_POINT),
                 command_func=lan_device.set_temperature,
             ),
             UnitId.TEMP: TemperatureUnit(
                 device_name=name,
                 id=UnitId.TEMP,
                 name="temperature",
-                unit=units.get(UnitId.TEMP),
+                image=0,
+                _unit=units.get(UnitId.TEMP),
             ),
             UnitId.MODE: SelectorSwitchUnit(
                 device_name=name,
                 id=UnitId.MODE,
                 image=19,
                 name="mode",
-                unit=units.get(UnitId.MODE),
+                _unit=units.get(UnitId.MODE),
                 values=Mode,
-                command_func=lan_device.set_mode,
+                command_func=lan_device.set_mode,  # type: ignore
             ),
             UnitId.FAN: SelectorSwitchUnit(
                 device_name=name,
                 id=UnitId.FAN,
                 image=7,
                 name="fan",
-                unit=units.get(UnitId.FAN),
+                _unit=units.get(UnitId.FAN),
                 values=FanSpeed,
-                command_func=lan_device.set_fan_speed,
+                command_func=lan_device.set_fan_speed,  # type: ignore
             ),
             UnitId.ECO: SwitchUnit(
                 device_name=name,
                 id=UnitId.ECO,
                 image=15,
                 name="eco",
-                unit=units.get(UnitId.ECO),
+                _unit=units.get(UnitId.ECO),
                 command_func=lan_device.set_eco,
             ),
             UnitId.LIGHT: SwitchUnit(
@@ -112,7 +121,7 @@ class Device:
                 id=UnitId.LIGHT,
                 image=0,
                 name="light",
-                unit=units.get(UnitId.LIGHT),
+                _unit=units.get(UnitId.LIGHT),
                 command_func=lan_device.set_light,
             ),
             UnitId.SWING: SwitchUnit(
@@ -120,7 +129,7 @@ class Device:
                 id=UnitId.SWING,
                 image=7,
                 name="swing",
-                unit=units.get(UnitId.SWING),
+                _unit=units.get(UnitId.SWING),
                 command_func=lan_device.set_swing,
             ),
             UnitId.SLEEP: SwitchUnit(
@@ -128,7 +137,7 @@ class Device:
                 id=UnitId.SLEEP,
                 image=21,
                 name="sleep",
-                unit=units.get(UnitId.SLEEP),
+                _unit=units.get(UnitId.SLEEP),
                 command_func=lan_device.set_sleep,
             ),
             UnitId.HEALTH: SwitchUnit(
@@ -136,7 +145,7 @@ class Device:
                 id=UnitId.HEALTH,
                 image=11,
                 name="health",
-                unit=units.get(UnitId.HEALTH),
+                _unit=units.get(UnitId.HEALTH),
                 command_func=lan_device.set_health,
             ),
         }

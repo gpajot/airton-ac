@@ -1,8 +1,11 @@
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any, ClassVar, Dict, Optional
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, ClassVar, Dict, Optional
 
-import DomoticzEx
+if TYPE_CHECKING:
+    from airton_ac.domoticz.types import DomoticzEx
+else:
+    import DomoticzEx
 
 from airton_ac import Values
 
@@ -13,20 +16,20 @@ class Unit(ABC):
     id: int
     name: str
     image: int
-    unit: DomoticzEx.Unit
+    _unit: Optional[DomoticzEx.Unit]
+    unit: DomoticzEx.Unit = field(init=False)
 
     TYPE: ClassVar[str]
 
     def __post_init__(self):
-        if not self.unit:
-            self._create()
+        self.unit = self._unit or self._create()
 
-    def _create(self) -> None:
+    def _create(self) -> DomoticzEx.Unit:
         """Create the Domoticz unit"""
         name = f"{self.device_name} {self.name}"
-        options = self._options
+        options = self._options()
         DomoticzEx.Log(f"creating {name} unit")
-        self.unit = DomoticzEx.Unit(
+        unit = DomoticzEx.Unit(
             Name=name,
             DeviceID=self.device_name,
             Unit=self.id,
@@ -34,7 +37,8 @@ class Unit(ABC):
             TypeName=self.TYPE,
             **({"Options": options} if options else {}),
         )
-        self.unit.Create()
+        unit.Create()
+        return unit
 
     def _options(self) -> Optional[Dict[str, str]]:
         return None

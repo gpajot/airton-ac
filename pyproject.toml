@@ -17,6 +17,7 @@ tinytuya = "==1.7.1"
 flake8 = "^5"
 black = "^22"
 isort = "^5"
+mypy = "~0"
 pre-commit = "^2"
 
 [build-system]
@@ -25,3 +26,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.isort]
 profile = "black"
+
+[tool.mypy]
+ignore_missing_imports = true
+install_types = true
+non_interactive = true

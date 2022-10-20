@@ -22,3 +22,10 @@ repos:
         pass_filenames: true
         types:
           - python
+      - id: mypy
+        name: mypy
+        entry: poetry run mypy
+        language: system
+        pass_filenames: true
+        types:
+          - python

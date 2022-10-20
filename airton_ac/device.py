@@ -75,8 +75,8 @@ class Device:
         values = values or self._raw_values()
         return Values(
             power=bool(values[Command.POWER.value]),
-            set_point=int(values[Command.SET_POINT.value] / 10),
-            temp=values[Command.TEMP.value] / 10,
+            set_point=int(int(values[Command.SET_POINT.value]) / 10),
+            temp=int(values[Command.TEMP.value]) / 10,
             mode=Mode(values[Command.MODE.value]),
             fan_speed=FanSpeed(values[Command.FAN.value]),
             eco=bool(values[Command.ECO.value]),
