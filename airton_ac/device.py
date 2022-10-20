@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Set, Tuple, Union
 
 import tinytuya
 
 
-class Command(Enum):
+class Command(str, Enum):
     POWER = "1"
     SET_POINT = "2"
     TEMP = "3"
@@ -19,7 +19,7 @@ class Command(Enum):
     HEALTH = "110"
 
 
-class Mode(Enum):
+class Mode(str, Enum):
     AUTO = "auto"
     COOL = "cold"
     HEAT = "heat"
@@ -27,7 +27,7 @@ class Mode(Enum):
     VENT = "fan"
 
 
-class FanSpeed(Enum):
+class FanSpeed(str, Enum):
     AUTO = "auto"
     QUIET = "mute"
     L1 = "low"
@@ -36,6 +36,10 @@ class FanSpeed(Enum):
     L4 = "mid_high"
     L5 = "high"
     TURBO = "turbo"
+
+
+RawValue = Union[bool, int, str]
+RawValues = Dict[str, RawValue]
 
 
 @dataclass
@@ -52,6 +56,65 @@ class Values:
     health: bool
 
 
+@dataclass
+class Exclusion:
+    command: Command
+    values: Set[RawValue]
+
+    def applicable(self, values: RawValues) -> bool:
+        return values[self.command.value] in values
+
+
+@dataclass
+class Constraint:
+    command: Command
+    values: Optional[Set[RawValue]]
+    exclusions: Tuple[Exclusion, ...]
+
+    def ok(self, command: str, value: RawValue, values: RawValues) -> bool:
+        if command != self.command or self.values and value not in self.values:
+            # Constraint is not applicable.
+            return True
+        for exclusion in self.exclusions:
+            if exclusion.applicable(values):
+                return False
+        return True
+
+
+CONSTRAINTS: Tuple[Constraint, ...] = (
+    Constraint(
+        Command.SET_POINT,
+        None,
+        (
+            Exclusion(Command.MODE, {Mode.AUTO.value, Mode.VENT.value}),
+            Exclusion(Command.ECO, {True}),
+        ),
+    ),
+    Constraint(Command.FAN, None, (Exclusion(Command.MODE, {Mode.DRY.value}),)),
+    Constraint(
+        Command.FAN,
+        {FanSpeed.TURBO.value},
+        (
+            Exclusion(Command.MODE, {Mode.AUTO.value, Mode.DRY.value}),
+            Exclusion(Command.ECO, {True}),
+        ),
+    ),
+    Constraint(
+        Command.ECO,
+        None,
+        (Exclusion(Command.MODE, {Mode.AUTO.value, Mode.DRY.value, Mode.VENT.value}),),
+    ),
+    Constraint(
+        Command.SLEEP,
+        None,
+        (
+            Exclusion(Command.MODE, {Mode.AUTO.value, Mode.VENT.value}),
+            Exclusion(Command.ECO, {True}),
+        ),
+    ),
+)
+
+
 class Device:
     """Interact with the Wifi device over LAN.
     Note: not using tinytuya.Contrib.ClimateDevice as values differ.
@@ -65,12 +128,10 @@ class Device:
             version=3.3,
         )
 
-    def _raw_values(self) -> Dict[str, Union[bool, int, str]]:
+    def _raw_values(self) -> RawValues:
         return self._device.status()["dps"]
 
-    def values(
-        self, values: Optional[Dict[str, Union[bool, int, str]]] = None
-    ) -> Values:
+    def values(self, values: Optional[RawValues] = None) -> Values:
         """Get current values from the AC."""
         values = values or self._raw_values()
         return Values(
@@ -87,11 +148,15 @@ class Device:
             health=bool(values[Command.HEALTH.value]),
         )
 
-    def _update(self, values: Dict[str, Union[bool, int, str]]) -> Values:
+    def _update(self, values: RawValues) -> Values:
         current = self._raw_values()
-        updated: Dict[str, Union[bool, int, str]] = {}
+        updated: RawValues = {}
         for k, v in values.items():
             if v != current[k]:
+                # Check constraints.
+                for constraint in CONSTRAINTS:
+                    if not constraint.ok(k, v, current):
+                        continue
                 updated[k] = v
         if updated:
             payload = self._device.generate_payload(tinytuya.CONTROL, values)
