@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "airton_ac"
-version = "1.0.0"
+version = "1.1.0"
 description = "Control an Airton AC device over LAN."
 authors = ["Gabriel Pajot <gab@les-cactus.co>"]
 license = "MIT"
@@ -12,7 +12,7 @@ exclude = ["airton_ac/domoticz/types.py"]
 [tool.poetry.dependencies]
 python = ">=3.7,<3.11"
 
-tinytuya = "==1.7.1"
+tinytuya = "~1.7"
 
 [tool.poetry.group.test.dependencies]
 flake8 = "^5"
