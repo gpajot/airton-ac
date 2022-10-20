@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Callable, ClassVar
+from typing import Callable, ClassVar
 
 from airton_ac import Values
 from airton_ac.domoticz.units.abc import Unit
@@ -14,10 +14,13 @@ class SwitchUnit(Unit):
     def on_command(self, command: str, level: float) -> Values:
         return self.command_func(command.lower() == "on")
 
-    def _update(self, value: Any) -> None:
+    def _update(self, value: bool) -> bool:
         if value and not self.unit.nValue:
             self.unit.nValue = 1
             self.unit.sValue = "On"
-        elif not value and self.unit.nValue:
+            return True
+        if not value and self.unit.nValue:
             self.unit.nValue = 0
             self.unit.sValue = "Off"
+            return True
+        return False

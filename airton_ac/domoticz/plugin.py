@@ -32,7 +32,8 @@ else:
     import DomoticzEx
 
 import airton_ac as ac
-from airton_ac.domoticz import Device, Heartbeat
+from airton_ac.domoticz.device import Device
+from airton_ac.domoticz.heartbeat import Heartbeat
 
 device: Optional[Device] = None
 heartbeat: Optional[Heartbeat] = None

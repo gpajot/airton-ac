@@ -7,6 +7,7 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/gpajot/airton-ac"
 include = ["airton_ac/py.typed"]
+exclude = ["airton_ac/domoticz/types.py"]
 
 [tool.poetry.dependencies]
 python = ">=3.7,<3.11"

@@ -48,9 +48,9 @@ class Unit(ABC):
         """Update the underlying device and return new values."""
 
     def update(self, value: Any) -> None:
-        self._update(value)
-        self.unit.Update(Log=True)
+        if self._update(value):
+            self.unit.Update(Log=True)
 
     @abstractmethod
-    def _update(self, value: Any) -> None:
+    def _update(self, value: Any) -> bool:
         """Update the Dommoticz unit values."""

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, IntEnum
-from typing import Any, Callable, ClassVar, Dict, Type
+from typing import Callable, ClassVar, Dict, Type
 
 from airton_ac import Values
 from airton_ac.domoticz.units.abc import Unit
@@ -38,8 +38,10 @@ class SelectorSwitchUnit(Unit):
             "SelectorStyle": "0",
         }
 
-    def _update(self, value: Any) -> None:
+    def _update(self, value: Enum) -> bool:
         value = self.values.from_lan(value)
         if str(value.value) != self.unit.sValue:
             self.unit.nValue = 1 if value else 0
             self.unit.sValue = str(value.value)
+            return True
+        return False
