@@ -1,171 +1,162 @@
-from dataclasses import dataclass
 from enum import IntEnum
-from typing import Dict, Optional
+from typing import ClassVar, Dict, Type
 
 import DomoticzEx
 
 import airton_ac.device as lan
+from airton_ac.domoticz.units import (
+    Options,
+    SelectorSwitchUnit,
+    SetPointUnit,
+    SwitchUnit,
+    TemperatureUnit,
+    Unit,
+)
 
 
-class Unit(IntEnum):
+class UnitId(IntEnum):
     """Unit IDs."""
 
     POWER = 1
-    MODE = 2
-    FAN = 3
-    SET_POINT = 4
-    TEMP = 5
+    SET_POINT = 2
+    TEMP = 3
+    MODE = 4
+    FAN = 5
+    ECO = 6
+    LIGHT = 7
+    SWING = 8
+    SLEEP = 9
+    HEALTH = 10
 
 
-class Mode(IntEnum):
+class Mode(Options):
     OFF = 0
-    COOL = 10
-    HEAT = 20
-    DRY = 30
-    VENT = 40
+    AUTO = 10
+    COOL = 20
+    HEAT = 30
+    DRY = 40
+    VENT = 50
 
-    def to_lan(self) -> lan.Mode:
-        return lan.Mode[self.name]
-
-    @classmethod
-    def from_lan(cls, mode: lan.Mode) -> "Mode":
-        return cls[mode.name]
+    AC_ENUM: ClassVar[Type[lan.Mode]] = lan.Mode
 
 
-class FanSpeed(IntEnum):
+class FanSpeed(Options):
     OFF = 0
-    QUIET = 10
-    LOW = 20
-    AUTO = 30
-    MEDIUM = 40
-    HIGH = 50
+    AUTO = 10
+    QUIET = 20
+    L1 = 30
+    L2 = 40
+    L3 = 50
+    L4 = 60
+    L5 = 70
+    TURBO = 80
 
-    def to_lan(self) -> lan.FanSpeed:
-        return lan.FanSpeed[self.name]
-
-    @classmethod
-    def from_lan(cls, speed: lan.FanSpeed) -> "FanSpeed":
-        return cls[speed.name]
+    AC_ENUM: ClassVar[lan.FanSpeed] = lan.FanSpeed
 
 
-@dataclass
 class Device:
-    name: str
-    lan_device: lan.Device
-    units: Dict[int, DomoticzEx.Unit]
-
-    def __post_init__(self):
-        # Create units if needed.
-        if Unit.POWER not in self.units:
-            name = f"{self.name} Power"
-            DomoticzEx.Log(f"creating {name} unit")
-            DomoticzEx.Unit(
-                Name=name,
-                DeviceID=self.name,
-                Unit=Unit.POWER,
-                Image=9,
-                TypeName="Switch",
-            ).Create()
-        if Unit.MODE not in self.units:
-            name = f"{self.name} Mode"
-            DomoticzEx.Log(f"creating {name} unit")
-            DomoticzEx.Unit(
-                Name=name,
-                device_id=self.name,
-                Unit=Unit.MODE,
-                Image=19,
-                _type="Selector Switch",
-                Options={
-                    "LevelActions": "||||",
-                    "LevelNames": "Off|Cool|Heat|Dry|Vent",
-                    "LevelOffHidden": "true",
-                    "SelectorStyle": "0",
-                },
-            ).Create()
-        if Unit.FAN not in self.units:
-            name = f"{self.name} Fan"
-            DomoticzEx.Log(f"creating {name} unit")
-            DomoticzEx.Unit(
-                Name=name,
-                device_id=self.name,
-                Unit=Unit.FAN,
-                Image=7,
-                TypeName="Selector Switch",
-                Options={
-                    "LevelActions": "|||||",
-                    "LevelNames": "Off|Quiet|Low|Auto|Medium|High",
-                    "LevelOffHidden": "true",
-                    "SelectorStyle": "0",
-                },
-            ).Create()
-        if Unit.SET_POINT not in self.units:
-            name = f"{self.name} Set point"
-            DomoticzEx.Log(f"creating {name} unit")
-            DomoticzEx.Unit(
-                Name=name,
-                device_id=self.name,
-                Unit=Unit.SET_POINT,
-                Image=15,
-                TypeName="Set Point",
-            ).Create()
-        if Unit.TEMP not in self.units:
-            name = f"{self.name} Temperature"
-            DomoticzEx.Log(f"creating {name} unit")
-            DomoticzEx.Unit(
-                Name=name,
-                device_id=self.name,
-                Unit=Unit.TEMP,
-                Image=15,
-                TypeName="Temperature",
-            ).Create()
+    def __init__(
+        self, name: str, lan_device: lan.Device, units: Dict[int, DomoticzEx.Unit]
+    ):
+        self.lan_device = lan_device
+        self.units: Dict[int, Unit] = {
+            UnitId.POWER: SwitchUnit(
+                device_name=name,
+                id=UnitId.POWER,
+                image=9,
+                name="power",
+                unit=units.get(UnitId.POWER),
+                command_func=lan_device.set_power,
+            ),
+            UnitId.SET_POINT: SetPointUnit(
+                device_name=name,
+                id=UnitId.SET_POINT,
+                name="set point",
+                unit=units.get(UnitId.SET_POINT),
+                command_func=lan_device.set_temperature,
+            ),
+            UnitId.TEMP: TemperatureUnit(
+                device_name=name,
+                id=UnitId.TEMP,
+                name="temperature",
+                unit=units.get(UnitId.TEMP),
+            ),
+            UnitId.MODE: SelectorSwitchUnit(
+                device_name=name,
+                id=UnitId.MODE,
+                image=19,
+                name="mode",
+                unit=units.get(UnitId.MODE),
+                values=Mode,
+                command_func=lan_device.set_mode,
+            ),
+            UnitId.FAN: SelectorSwitchUnit(
+                device_name=name,
+                id=UnitId.FAN,
+                image=7,
+                name="fan",
+                unit=units.get(UnitId.FAN),
+                values=FanSpeed,
+                command_func=lan_device.set_fan_speed,
+            ),
+            UnitId.ECO: SwitchUnit(
+                device_name=name,
+                id=UnitId.ECO,
+                image=15,
+                name="eco",
+                unit=units.get(UnitId.ECO),
+                command_func=lan_device.set_eco,
+            ),
+            UnitId.LIGHT: SwitchUnit(
+                device_name=name,
+                id=UnitId.LIGHT,
+                image=0,
+                name="light",
+                unit=units.get(UnitId.LIGHT),
+                command_func=lan_device.set_light,
+            ),
+            UnitId.SWING: SwitchUnit(
+                device_name=name,
+                id=UnitId.SWING,
+                image=7,
+                name="swing",
+                unit=units.get(UnitId.SWING),
+                command_func=lan_device.set_swing,
+            ),
+            UnitId.SLEEP: SwitchUnit(
+                device_name=name,
+                id=UnitId.SLEEP,
+                image=21,
+                name="sleep",
+                unit=units.get(UnitId.SLEEP),
+                command_func=lan_device.set_sleep,
+            ),
+            UnitId.HEALTH: SwitchUnit(
+                device_name=name,
+                id=UnitId.HEALTH,
+                image=11,
+                name="health",
+                unit=units.get(UnitId.HEALTH),
+                command_func=lan_device.set_health,
+            ),
+        }
 
     def refresh(self) -> None:
-        self._refresh(self.lan_device.values())
+        self._update(self.lan_device.values())
 
-    def _refresh(self, values: lan.Values) -> None:
-        power_unit = self.units[Unit.POWER]
-        if values.power and not power_unit.nValue:
-            power_unit.nValue = 1
-            power_unit.sValue = "On"
-            power_unit.Update(Log=True)
-        elif not values.power and power_unit.nValue:
-            power_unit.nValue = 0
-            power_unit.sValue = "Off"
-            power_unit.Update(Log=True)
-        mode_unit = self.units[Unit.MODE]
-        new_mode = Mode.from_lan(values.mode)
-        if new_mode != mode_unit.nValue:
-            mode_unit.nValue = 0 if new_mode is Mode.OFF else 1
-            mode_unit.sValue = str(new_mode.value)
-            mode_unit.Update(Log=True)
-        fan_unit = self.units[Unit.FAN]
-        new_speed = FanSpeed.from_lan(values.fan_speed)
-        if new_speed != fan_unit.nValue:
-            fan_unit.nValue = 0 if new_speed is FanSpeed.OFF else 1
-            fan_unit.sValue = str(new_speed.value)
-            fan_unit.Update(Log=True)
-        set_point_unit = self.units[Unit.SET_POINT]
-        if (
-            not set_point_unit.sValue
-            or int(float(set_point_unit.sValue)) != values.set_point
-        ):
-            set_point_unit.sValue = str(values.set_point)
-            set_point_unit.Update(Log=True)
-        temp_unit = self.units[Unit.TEMP]
-        if not temp_unit.sValue or float(temp_unit.sValue) != values.temp:
-            temp_unit.sValue = str(values.temp)
-            temp_unit.Update(Log=True)
+    def _update(self, values: lan.Values) -> None:
+        self.units[UnitId.POWER].update(values.power)
+        self.units[UnitId.SET_POINT].update(values.set_point)
+        self.units[UnitId.TEMP].update(values.temp)
+        self.units[UnitId.MODE].update(values.mode)
+        self.units[UnitId.FAN].update(values.fan_speed)
+        self.units[UnitId.ECO].update(values.eco)
+        self.units[UnitId.LIGHT].update(values.light)
+        self.units[UnitId.SWING].update(values.swing)
+        self.units[UnitId.SLEEP].update(values.sleep)
+        self.units[UnitId.HEALTH].update(values.health)
 
     def on_command(self, unit_id: int, command: str, level: float) -> None:
-        new_values: Optional[lan.Values] = None
-        if unit_id == Unit.POWER:
-            new_values = self.lan_device.set_power(command.lower() == "on")
-        elif unit_id == Unit.MODE and level:
-            new_values = self.lan_device.set_mode(Mode(level).to_lan())
-        elif unit_id == Unit.FAN and level:
-            new_values = self.lan_device.set_fan_speed(FanSpeed(level).to_lan())
-        elif unit_id == Unit.SET_POINT:
-            new_values = self.lan_device.set_temperature(level)
-
-        if new_values:
-            self._refresh(new_values)
+        values = self.units[unit_id].on_command(command, level)
+        if values:
+            self._update(values)

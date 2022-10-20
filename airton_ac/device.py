@@ -1,110 +1,144 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
+from typing import Dict, Optional, Union
 
-from tinytuya import Device
-
-
-class StrEnum(str, Enum):
-    def __str__(self) -> str:
-        return self.value
+import tinytuya
 
 
-class Indices(StrEnum):
+class Command(Enum):
     POWER = "1"
     SET_POINT = "2"
     TEMP = "3"
     MODE = "4"
     FAN = "5"
-    LOW_HEAT = "8"
+    ECO = "8"
+    LIGHT = "13"
+    SWING = "15"
+    SWING_DIRECTION = "107"
+    SLEEP = "109"
+    HEALTH = "110"
 
 
-class Mode(StrEnum):
+class Mode(Enum):
+    AUTO = "auto"
     COOL = "cold"
     HEAT = "heat"
     DRY = "wet"
     VENT = "fan"
 
 
-class FanSpeed(StrEnum):
-    QUIET = "mute"
-    LOW = "low"
+class FanSpeed(Enum):
     AUTO = "auto"
-    MEDIUM = "mid"
-    HIGH = "high"
+    QUIET = "mute"
+    L1 = "low"
+    L2 = "low_mid"
+    L3 = "mid"
+    L4 = "mid_high"
+    L5 = "high"
+    TURBO = "turbo"
 
 
 @dataclass
 class Values:
     power: bool
-    mode: Mode
-    fan_speed: FanSpeed
     set_point: int
     temp: float
-    low_heat: bool
+    mode: Mode
+    fan_speed: FanSpeed
+    eco: bool
+    light: bool
+    swing: bool
+    sleep: bool
+    health: bool
 
 
-@dataclass
 class Device:
     """Interact with the Wifi device over LAN.
     Note: not using tinytuya.Contrib.ClimateDevice as values differ.
     """
 
-    id: str
-    address: str
-    local_key: str
-    _device: Device = field(init=False)
-
-    def __post_init__(self):
-        self._device = Device(
-            dev_id=self.id,
-            address=self.address,
-            local_key=self.local_key,
+    def __init__(self, _id: str, address: str, local_key: str):
+        self._device = tinytuya.Device(
+            dev_id=_id,
+            address=address,
+            local_key=local_key,
             version=3.3,
         )
 
-    def values(self) -> Values:
+    def _raw_values(self) -> Dict[str, Union[bool, int, str]]:
+        return self._device.status()["dps"]
+
+    def values(
+        self, values: Optional[Dict[str, Union[bool, int, str]]] = None
+    ) -> Values:
         """Get current values from the AC."""
-        values = self._device.status()["dps"]
+        values = values or self._raw_values()
         return Values(
-            power=bool(values[Indices.POWER]),
-            mode=Mode(values[Indices.MODE]),
-            fan_speed=FanSpeed(values[Indices.FAN]),
-            set_point=int(values[Indices.SET_POINT] / 10),
-            temp=values[Indices.TEMP] / 10,
-            low_heat=bool(values[Indices.LOW_HEAT]),
+            power=bool(values[Command.POWER.value]),
+            set_point=int(values[Command.SET_POINT.value] / 10),
+            temp=values[Command.TEMP.value] / 10,
+            mode=Mode(values[Command.MODE.value]),
+            fan_speed=FanSpeed(values[Command.FAN.value]),
+            eco=bool(values[Command.ECO.value]),
+            light=bool(values[Command.LIGHT.value]),
+            swing=values[Command.SWING.value] == "un_down"
+            and values[Command.SWING_DIRECTION.value] == Command.SWING.value,
+            sleep=bool(values[Command.SLEEP.value]),
+            health=bool(values[Command.HEALTH.value]),
         )
+
+    def _update(self, values: Dict[str, Union[bool, int, str]]) -> Values:
+        current = self._raw_values()
+        updated: Dict[str, Union[bool, int, str]] = {}
+        for k, v in values.items():
+            if v != current[k]:
+                updated[k] = v
+        if updated:
+            payload = self._device.generate_payload(tinytuya.CONTROL, values)
+            self._device._send_receive(payload)
+            return self.values()
+        return self.values(current)
 
     def set_power(self, status: bool) -> Values:
         """Turn on or off."""
-        values = self.values()
-        if values.power is not status:
-            self._device.set_status(status, Indices.POWER)
-            values.power = status
-        return values
-
-    def set_mode(self, mode: Mode) -> Values:
-        """Set operating mode."""
-        values = self.values()
-        if values.mode is not mode:
-            self._device.set_value(Indices.MODE, str(mode))
-            values.mode = mode
-        return values
-
-    def set_fan_speed(self, speed: FanSpeed) -> Values:
-        """Set fan speed."""
-        values = self.values()
-        if values.fan_speed is not speed:
-            self._device.set_value(Indices.FAN, str(speed))
-            values.fan_speed = speed
-        return values
+        return self._update({Command.POWER.value: status})
 
     def set_temperature(self, temp: float) -> Values:
         """Set temperature.
         Will round and multiply by 10 so that 18.5 will be 180.
         """
-        values = self.values()
         set_point = max(min(int(temp), 31), 16) * 10
-        if values.set_point != set_point:
-            self._device.set_value(Indices.SET_POINT, set_point)
-            values.set_point = set_point
-        return values
+        return self._update({Command.SET_POINT.value: set_point})
+
+    def set_mode(self, mode: Mode) -> Values:
+        """Set operating mode."""
+        return self._update({Command.MODE.value: mode.value})
+
+    def set_fan_speed(self, speed: FanSpeed) -> Values:
+        """Set fan speed."""
+        return self._update({Command.FAN.value: speed.value})
+
+    def set_eco(self, status: bool) -> Values:
+        """Toggle low heat."""
+        return self._update({Command.ECO.value: status})
+
+    def set_light(self, status: bool) -> Values:
+        """Toggle light."""
+        return self._update({Command.LIGHT.value: status})
+
+    def set_swing(self, status: bool) -> Values:
+        """Toggle swing."""
+        return self._update(
+            {
+                Command.SWING.value: "un_down" if status else "off",
+                Command.SWING_DIRECTION.value: Command.SWING.value if status else "off",
+            }
+        )
+
+    def set_sleep(self, status: bool) -> Values:
+        """Toggle sleep."""
+        return self._update({Command.SLEEP.value: status})
+
+    def set_health(self, status: bool) -> Values:
+        """Toggle health."""
+        return self._update({Command.HEALTH.value: status})
