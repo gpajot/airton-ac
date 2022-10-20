@@ -14,6 +14,8 @@ class SetPointUnit(Unit):
     def on_command(self, command: str, level: float) -> Values:
         return self.command_func(level)
 
-    def _update(self, value: int) -> None:
+    def _update(self, value: int) -> bool:
         if not self.unit.sValue or int(float(self.unit.sValue)) != value:
             self.unit.sValue = str(value)
+            return True
+        return False

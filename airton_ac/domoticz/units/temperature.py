@@ -11,6 +11,8 @@ class TemperatureUnit(Unit):
     def on_command(self, command: str, level: float) -> None:
         return None
 
-    def _update(self, value: int) -> None:
+    def _update(self, value: float) -> bool:
         if not self.unit.sValue or float(self.unit.sValue) != value:
             self.unit.sValue = str(value)
+            return True
+        return False

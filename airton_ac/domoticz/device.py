@@ -135,7 +135,7 @@ class Device:
             UnitId.SLEEP: SwitchUnit(
                 device_name=name,
                 id=UnitId.SLEEP,
-                image=21,
+                image=9,
                 name="sleep",
                 _unit=units.get(UnitId.SLEEP),
                 command_func=lan_device.set_sleep,
