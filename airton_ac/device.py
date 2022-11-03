@@ -172,7 +172,7 @@ class Device:
         """Set temperature.
         Will round and multiply by 10 so that 18.5 will be 180.
         """
-        set_point = max(min(int(temp), 31), 16) * 10
+        set_point = max(min(round(temp), 31), 16) * 10
         return self._update({Command.SET_POINT.value: set_point})
 
     def set_mode(self, mode: Mode) -> Values:
