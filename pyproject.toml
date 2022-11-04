@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "airton_ac"
-version = "1.1.0"
+version = "1.2.0"
 description = "Control an Airton AC device over LAN."
 authors = ["Gabriel Pajot <gab@les-cactus.co>"]
 license = "MIT"
@@ -15,6 +15,8 @@ python = ">=3.7,<3.12"
 tinytuya = "~1.7"
 
 [tool.poetry.group.test.dependencies]
+pytest = "^7"
+pytest-mock = "^3"
 flake8 = "^5"
 black = "^22"
 isort = "^5"
