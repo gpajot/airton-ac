@@ -45,7 +45,7 @@ RawValues = Dict[str, RawValue]
 @dataclass
 class Values:
     power: bool
-    set_point: int
+    set_point: float
     temp: float
     mode: Mode
     fan_speed: FanSpeed
@@ -120,13 +120,22 @@ class Device:
     Note: not using tinytuya.Contrib.ClimateDevice as values differ.
     """
 
-    def __init__(self, _id: str, address: str, local_key: str):
+    def __init__(
+        self,
+        _id: str,
+        address: str,
+        local_key: str,
+        set_point_offset: float = 0,
+        temp_offset: float = 0,
+    ):
         self._device = tinytuya.Device(
             dev_id=_id,
             address=address,
             local_key=local_key,
             version=3.3,
         )
+        self._set_point_offset = set_point_offset
+        self._temp_offset = temp_offset
 
     def _raw_values(self) -> RawValues:
         return self._device.status()["dps"]
@@ -136,8 +145,9 @@ class Device:
         values = values or self._raw_values()
         return Values(
             power=bool(values[Command.POWER.value]),
-            set_point=int(int(values[Command.SET_POINT.value]) / 10),
-            temp=int(values[Command.TEMP.value]) / 10,
+            set_point=int(values[Command.SET_POINT.value]) / 10
+            + self._set_point_offset,
+            temp=int(values[Command.TEMP.value]) / 10 + self._temp_offset,
             mode=Mode(values[Command.MODE.value]),
             fan_speed=FanSpeed(values[Command.FAN.value]),
             eco=bool(values[Command.ECO.value]),
@@ -172,7 +182,7 @@ class Device:
         """Set temperature.
         Will round and multiply by 10 so that 18.5 will be 180.
         """
-        set_point = max(min(round(temp), 31), 16) * 10
+        set_point = max(min(round(temp - self._set_point_offset), 31), 16) * 10
         return self._update({Command.SET_POINT.value: set_point})
 
     def set_mode(self, mode: Mode) -> Values:
