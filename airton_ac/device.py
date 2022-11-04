@@ -62,7 +62,7 @@ class Exclusion:
     values: Set[RawValue]
 
     def applicable(self, values: RawValues) -> bool:
-        return values[self.command.value] in values
+        return values[self.command.value] in self.values
 
 
 @dataclass
@@ -72,7 +72,7 @@ class Constraint:
     exclusions: Tuple[Exclusion, ...]
 
     def ok(self, command: str, value: RawValue, values: RawValues) -> bool:
-        if command != self.command or self.values and value not in self.values:
+        if command != self.command.value or self.values and value not in self.values:
             # Constraint is not applicable.
             return True
         for exclusion in self.exclusions:
@@ -160,19 +160,25 @@ class Device:
 
     def _update(self, values: RawValues) -> Values:
         current = self._raw_values()
+        updated = self._validate_payload(current, values)
+        if updated:
+            payload = self._device.generate_payload(tinytuya.CONTROL, updated)
+            self._device._send_receive(payload)
+            return self.values()
+        return self.values(current)
+
+    @staticmethod
+    def _validate_payload(current: RawValues, update: RawValues) -> RawValues:
         updated: RawValues = {}
-        for k, v in values.items():
+        for k, v in update.items():
             if v != current[k]:
                 # Check constraints.
                 for constraint in CONSTRAINTS:
                     if not constraint.ok(k, v, current):
-                        continue
-                updated[k] = v
-        if updated:
-            payload = self._device.generate_payload(tinytuya.CONTROL, values)
-            self._device._send_receive(payload)
-            return self.values()
-        return self.values(current)
+                        break
+                else:
+                    updated[k] = v
+        return updated
 
     def set_power(self, status: bool) -> Values:
         """Turn on or off."""

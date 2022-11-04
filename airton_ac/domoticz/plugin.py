@@ -1,5 +1,5 @@
 """
-<plugin key="AirtonAC" name="Airton AC" author="gab@les-cactus.co" version="1.1.0" wikilink="https://github.com/gpajot/airton-ac#domoticz-plugin" externallink="https://github.com/gpajot/airton-ac">
+<plugin key="AirtonAC" name="Airton AC" author="gab@les-cactus.co" version="1.2.0" wikilink="https://github.com/gpajot/airton-ac#domoticz-plugin" externallink="https://github.com/gpajot/airton-ac">
     <description>
         <h2>Airton AC plugin</h2><br/>
         <h3>Features</h3>
