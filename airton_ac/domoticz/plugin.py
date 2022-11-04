@@ -19,8 +19,10 @@
     <params>
         <param field="Username" label="Device ID" required="true"/>
         <param field="Address" label="Device IP Address" required="true"/>
-        <param field="Password" label="Device local key"/>
+        <param field="Password" label="Device local key" required="true"/>
         <param field="Mode1" label="Refresh interval (s)" requires="true" default="300"/>
+        <param field="Mode2" label="Set point offset" requires="true" default="0.0"/>
+        <param field="Mode3" label="Temperature offset" requires="true" default="0.0"/>
     </params>
 </plugin>
 """
@@ -48,6 +50,8 @@ def onStart():
             _id=Parameters["Username"],
             address=Parameters["Address"],
             local_key=Parameters["Password"],
+            set_point_offset=float(Parameters["Mode2"]),
+            temp_offset=float(Parameters["Mode3"]),
         ),
         units=Devices[name].Units if name in Devices else {},
     )
