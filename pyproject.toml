@@ -12,7 +12,7 @@ exclude = ["airton_ac/domoticz/types.py"]
 [tool.poetry.dependencies]
 python = ">=3.7,<3.12"
 
-tinytuya = "~1.7"
+tinytuya = ">=1.7,<1.10"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^7"
