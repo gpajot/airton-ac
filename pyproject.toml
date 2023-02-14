@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "airton_ac"
-version = "1.2.0"
+version = "2.0.0"
 description = "Control an Airton AC device over LAN."
 authors = ["Gabriel Pajot <gab@les-cactus.co>"]
 license = "MIT"
@@ -12,25 +12,32 @@ exclude = ["airton_ac/domoticz/types.py"]
 [tool.poetry.dependencies]
 python = ">=3.7,<3.12"
 
-tinytuya = ">=1.7,<1.10"
+local-tuya = ">=1.2.2,<2"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^7"
-pytest-mock = "^3"
-flake8 = "^5"
-black = "^22"
-isort = "^5"
-mypy = "~0"
-pre-commit = "^2"
+pytest = ">=7,<8"
+pytest-asyncio = ">=0,<1"
+pytest-mock = ">=3,<4"
+ruff = ">=0,<1"
+mypy = ">=1,<2"
+black = ">=23,<24"
+pre-commit = ">=2,<3"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.isort]
-profile = "black"
-
 [tool.mypy]
 ignore_missing_imports = true
 install_types = true
 non_interactive = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.ruff]
+select = ["A", "B", "E", "F", "I", "PT"]
+ignore = ["E501"]
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
