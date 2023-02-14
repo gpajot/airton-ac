@@ -1,1 +1,1 @@
-from airton_ac.device import Device, FanSpeed, Mode, Values
+from airton_ac.device import ACDevice, ACFanSpeed, ACMode, ACState

@@ -4,41 +4,48 @@
 [![version](https://img.shields.io/pypi/v/airton-ac?label=stable)](https://pypi.org/project/airton-ac/)
 [![python](https://img.shields.io/pypi/pyversions/airton-ac)](https://pypi.org/project/airton-ac/)
 
-Control an Airton AC device over the local area network without using any cloud.
+Control an Airton AC device over LAN.
 This requires having the [wifi module](https://eu.airton.shop/en/products/kit-module-wifi-pour-climatiseurs-airton-en-wifi-ready).
 
+## Features
+- asynchronous methods and transport
+- persistent communication to the device
+- automatic remote device state updates (remotes can still be used)
+- configurable buffering for subsequent updates
+- constraints between device commands
+- Domoticz plugin using a dedicated thread
+
 ## Usage
-You can use this library to control a device programmatically with `airton_ac.Device` or through the Domoticz plugin.
+See [local tuya requirements](https://github.com/gpajot/local-tuya#requirements) first to find device information.
 
-### Requirements
-To control a device you will need these 3 things:
-- the device ID
-- the device local IP address
-- the device local key (encryption key generated upon pairing)
+Example usage:
+```python
+from local_tuya import DeviceConfig, ProtocolConfig
+from airton_ac import ACDevice, ACFanSpeed
 
-To get those, follow instructions from [TinyTuya](https://github.com/jasonacox/tinytuya#setup-wizard---getting-local-keys).
-> ⚠️ Important considerations:
-> - After pairing the devices, assign static IPs in your router.
-> - Data center should be `Central Europe Data Center`.
 
-After having run the wizard, you can run `python -m tinytuya scan` to get a summary of devices.
-
-> ⚠️ Keep in mind that:
-> - if you reset or re-pair devices the local key will change
-> - you can delete your tuya IOT account but not the SmartLife one and devices should be kept there
-
-### Domoticz plugin
-The plugin requires having fetched device information using instructions above.
-Make sure to read [plugin instructions](https://www.domoticz.com/wiki/Using_Python_plugins) first.
-The Domoticz version should be `2022.1` or higher.
-
-```shell
-python3 -m pip install airton-ac
-python3 -m airton_ac.domoticz.install
+async with ACDevice(DeviceConfig(ProtocolConfig("{id}", "{address}", b"{key}"))) as device:
+    await device.switch(True)
+    await device.set_speed(ACFanSpeed.L2)
+    await device.switch(False)
 ```
 
-Restart Domoticz and create a new Hardware using `AirtonAC`. You will need one per device, fill in information and add.
-The hardware will create 10 devices to control the AC (all prefixed with hardware name):
+## Domoticz plugin
+The plugin requires having fetched device information using instructions above.
+Make sure to read [plugin instructions](https://www.domoticz.com/wiki/Using_Python_plugins) first.
+> 💡 The Domoticz version should be `2022.1` or higher.
+
+```shell
+python -m pip install --upgrade airton-ac
+python -m airton_ac.domoticz.install
+```
+Domoticz path defaults to `~/domoticz` but you can pass a `-p` option to the second command to change that:
+```shell
+python -m airton_ac.domoticz.install -p /some/other/path
+```
+
+Restart Domoticz and create a new Hardware using `Tuya Airton AC`. Fill in device information and add.
+The hardware will create up to 5 devices to control the fan (all prefixed with hardware name):
 - `power`: to turn on or off
 - `set point`: to set the target temperature
 - `temperature`: to record curent temperature as measured by the unit
@@ -49,3 +56,8 @@ The hardware will create 10 devices to control the AC (all prefixed with hardwar
 - `swing`: toggle swing mode
 - `sleep`: toggle sleep mode
 - `health`: toggle health mode
+
+You can customize the devices you want added in the hardware page.
+
+All device names and levels can be changed once added as only IDs are used internally.
+

@@ -1,11 +1,19 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Optional, Set, Tuple, Union
+from typing import Any, Callable, Optional
 
-import tinytuya
+from local_tuya import (
+    Constraint,
+    Constraints,
+    DataPoint,
+    Device,
+    DeviceConfig,
+    State,
+    Values,
+)
 
 
-class Command(str, Enum):
+class ACDataPoint(DataPoint):
     POWER = "1"
     SET_POINT = "2"
     TEMP = "3"
@@ -19,7 +27,7 @@ class Command(str, Enum):
     HEALTH = "110"
 
 
-class Mode(str, Enum):
+class ACMode(str, Enum):
     AUTO = "auto"
     COOL = "cold"
     HEAT = "heat"
@@ -27,7 +35,7 @@ class Mode(str, Enum):
     VENT = "fan"
 
 
-class FanSpeed(str, Enum):
+class ACFanSpeed(str, Enum):
     AUTO = "auto"
     QUIET = "mute"
     L1 = "low"
@@ -38,188 +46,116 @@ class FanSpeed(str, Enum):
     TURBO = "turbo"
 
 
-RawValue = Union[bool, int, str]
-RawValues = Dict[str, RawValue]
-
-
 @dataclass
-class Values:
+class ACState(State):
     power: bool
     set_point: float
     temp: float
-    mode: Mode
-    fan_speed: FanSpeed
+    mode: ACMode
+    fan_speed: ACFanSpeed
     eco: bool
     light: bool
     swing: bool
     sleep: bool
     health: bool
 
-
-@dataclass
-class Exclusion:
-    command: Command
-    values: Set[RawValue]
-
-    def applicable(self, values: RawValues) -> bool:
-        return values[self.command.value] in self.values
-
-
-@dataclass
-class Constraint:
-    command: Command
-    values: Optional[Set[RawValue]]
-    exclusions: Tuple[Exclusion, ...]
-
-    def ok(self, command: str, value: RawValue, values: RawValues) -> bool:
-        if command != self.command.value or self.values and value not in self.values:
-            # Constraint is not applicable.
-            return True
-        for exclusion in self.exclusions:
-            if exclusion.applicable(values):
-                return False
-        return True
+    @classmethod
+    def load(cls, values: Values) -> "ACState":
+        return cls(
+            power=bool(values[ACDataPoint.POWER]),
+            set_point=int(values[ACDataPoint.SET_POINT]) / 10,
+            temp=int(values[ACDataPoint.TEMP]) / 10,
+            mode=ACMode(values[ACDataPoint.MODE]),
+            fan_speed=ACFanSpeed(values[ACDataPoint.FAN]),
+            eco=bool(values[ACDataPoint.ECO]),
+            light=bool(values[ACDataPoint.LIGHT]),
+            swing=values[ACDataPoint.SWING] == "un_down"
+            and values[ACDataPoint.SWING_DIRECTION] == ACDataPoint.SWING,
+            sleep=bool(values[ACDataPoint.SLEEP]),
+            health=bool(values[ACDataPoint.HEALTH]),
+        )
 
 
-CONSTRAINTS: Tuple[Constraint, ...] = (
-    Constraint(
-        Command.SET_POINT,
-        None,
-        (
-            Exclusion(Command.MODE, {Mode.AUTO.value, Mode.VENT.value}),
-            Exclusion(Command.ECO, {True}),
-        ),
-    ),
-    Constraint(Command.FAN, None, (Exclusion(Command.MODE, {Mode.DRY.value}),)),
-    Constraint(
-        Command.FAN,
-        {FanSpeed.TURBO.value},
-        (
-            Exclusion(Command.MODE, {Mode.AUTO.value, Mode.DRY.value}),
-            Exclusion(Command.ECO, {True}),
-        ),
-    ),
-    Constraint(
-        Command.ECO,
-        None,
-        (Exclusion(Command.MODE, {Mode.AUTO.value, Mode.DRY.value, Mode.VENT.value}),),
-    ),
-    Constraint(
-        Command.SLEEP,
-        None,
-        (
-            Exclusion(Command.MODE, {Mode.AUTO.value, Mode.VENT.value}),
-            Exclusion(Command.ECO, {True}),
-        ),
-    ),
-)
-
-
-class Device:
-    """Interact with the Wifi device over LAN.
-    Note: not using tinytuya.Contrib.ClimateDevice as values differ.
-    """
-
+class ACDevice(Device[ACState]):
     def __init__(
         self,
-        _id: str,
-        address: str,
-        local_key: str,
-        set_point_offset: float = 0,
-        temp_offset: float = 0,
+        config: DeviceConfig,
+        state_updated_callback: Optional[Callable[[ACState], Any]] = None,
     ):
-        self._device = tinytuya.Device(
-            dev_id=_id,
-            address=address,
-            local_key=local_key,
-            version=3.3,
+        super().__init__(
+            config,
+            ACState.load,
+            state_updated_callback,
+            Constraints(
+                Constraint(
+                    ACDataPoint.SET_POINT,
+                    (ACDataPoint.MODE, {ACMode.AUTO, ACMode.VENT}),
+                    (ACDataPoint.ECO, {True}),
+                ),
+                Constraint(
+                    ACDataPoint.FAN,
+                    (ACDataPoint.MODE, {ACMode.DRY}),
+                ),
+                Constraint(
+                    ACDataPoint.FAN,
+                    (ACDataPoint.MODE, {ACMode.AUTO, ACMode.DRY}),
+                    (ACDataPoint.ECO, {True}),
+                    restrict_to={ACFanSpeed.TURBO},
+                ),
+                Constraint(
+                    ACDataPoint.ECO,
+                    (ACDataPoint.MODE, {ACMode.AUTO, ACMode.DRY, ACMode.VENT}),
+                ),
+                Constraint(
+                    ACDataPoint.SLEEP,
+                    (ACDataPoint.MODE, {ACMode.AUTO, ACMode.VENT}),
+                    (ACDataPoint.ECO, {True}),
+                ),
+            ),
         )
-        self._set_point_offset = set_point_offset
-        self._temp_offset = temp_offset
 
-    def _raw_values(self) -> RawValues:
-        return self._device.status()["dps"]
-
-    def values(self, values: Optional[RawValues] = None) -> Values:
-        """Get current values from the AC."""
-        values = values or self._raw_values()
-        return Values(
-            power=bool(values[Command.POWER.value]),
-            set_point=int(values[Command.SET_POINT.value]) / 10
-            + self._set_point_offset,
-            temp=int(values[Command.TEMP.value]) / 10 + self._temp_offset,
-            mode=Mode(values[Command.MODE.value]),
-            fan_speed=FanSpeed(values[Command.FAN.value]),
-            eco=bool(values[Command.ECO.value]),
-            light=bool(values[Command.LIGHT.value]),
-            swing=values[Command.SWING.value] == "un_down"
-            and values[Command.SWING_DIRECTION.value] == Command.SWING.value,
-            sleep=bool(values[Command.SLEEP.value]),
-            health=bool(values[Command.HEALTH.value]),
-        )
-
-    def _update(self, values: RawValues) -> Values:
-        current = self._raw_values()
-        updated = self._validate_payload(current, values)
-        if updated:
-            payload = self._device.generate_payload(tinytuya.CONTROL, updated)
-            self._device._send_receive(payload)
-            return self.values()
-        return self.values(current)
-
-    @staticmethod
-    def _validate_payload(current: RawValues, update: RawValues) -> RawValues:
-        updated: RawValues = {}
-        for k, v in update.items():
-            if v != current[k]:
-                # Check constraints.
-                for constraint in CONSTRAINTS:
-                    if not constraint.ok(k, v, current):
-                        break
-                else:
-                    updated[k] = v
-        return updated
-
-    def set_power(self, status: bool) -> Values:
+    async def switch(self, status: bool) -> None:
         """Turn on or off."""
-        return self._update({Command.POWER.value: status})
+        await self._update({ACDataPoint.POWER: status})
 
-    def set_temperature(self, temp: float) -> Values:
+    async def set_point(self, temp: float) -> None:
         """Set temperature.
         Will round and multiply by 10 so that 18.5 will be 180.
         """
-        set_point = max(min(round(temp - self._set_point_offset), 31), 16) * 10
-        return self._update({Command.SET_POINT.value: set_point})
+        set_point = max(min(round(temp), 31), 16) * 10
+        await self._update({ACDataPoint.SET_POINT: set_point})
 
-    def set_mode(self, mode: Mode) -> Values:
+    async def set_mode(self, mode: ACMode) -> None:
         """Set operating mode."""
-        return self._update({Command.MODE.value: mode.value})
+        await self._update({ACDataPoint.MODE: mode.value})
 
-    def set_fan_speed(self, speed: FanSpeed) -> Values:
+    async def set_fan_speed(self, speed: ACFanSpeed) -> None:
         """Set fan speed."""
-        return self._update({Command.FAN.value: speed.value})
+        await self._update({ACDataPoint.FAN: speed.value})
 
-    def set_eco(self, status: bool) -> Values:
+    async def switch_eco(self, status: bool) -> None:
         """Toggle low heat."""
-        return self._update({Command.ECO.value: status})
+        await self._update({ACDataPoint.ECO: status})
 
-    def set_light(self, status: bool) -> Values:
+    async def switch_light(self, status: bool) -> None:
         """Toggle light."""
-        return self._update({Command.LIGHT.value: status})
+        await self._update({ACDataPoint.LIGHT: status})
 
-    def set_swing(self, status: bool) -> Values:
+    async def switch_swing(self, status: bool) -> None:
         """Toggle swing."""
-        return self._update(
+        await self._update(
             {
-                Command.SWING.value: "un_down" if status else "off",
-                Command.SWING_DIRECTION.value: Command.SWING.value if status else "off",
+                ACDataPoint.SWING: "un_down" if status else "off",
+                ACDataPoint.SWING_DIRECTION: ACDataPoint.SWING.value
+                if status
+                else "off",
             }
         )
 
-    def set_sleep(self, status: bool) -> Values:
+    async def switch_sleep(self, status: bool) -> None:
         """Toggle sleep."""
-        return self._update({Command.SLEEP.value: status})
+        await self._update({ACDataPoint.SLEEP: status})
 
-    def set_health(self, status: bool) -> Values:
+    async def switch_health(self, status: bool) -> None:
         """Toggle health."""
-        return self._update({Command.HEALTH.value: status})
+        await self._update({ACDataPoint.HEALTH: status})
