@@ -215,14 +215,14 @@ files = [
 
 [[package]]
 name = "local-tuya"
-version = "1.2.2"
+version = "1.2.4"
 description = "Interface to Tuya devices over LAN."
 category = "main"
 optional = false
 python-versions = ">=3.7,<3.12"
 files = [
-    {file = "local_tuya-1.2.2-py3-none-any.whl", hash = "sha256:682c25d51aa4e43e4ff7162b062969901791960df528b550fcbb48a808149aa1"},
-    {file = "local_tuya-1.2.2.tar.gz", hash = "sha256:7cf2a8cebadedb356161c096c10a518b4132984e6a35fbe2fdd8a84d75387fea"},
+    {file = "local_tuya-1.2.4-py3-none-any.whl", hash = "sha256:ca1d199df539f559f29455e8aeaa56b80de5c6aed5376cd473ed053cb8d727fa"},
+    {file = "local_tuya-1.2.4.tar.gz", hash = "sha256:eae7397ac5db316d10f96aee3aa6344483218ec7835bea0edb1a58ed6f94061e"},
 ]
 
 [package.dependencies]
