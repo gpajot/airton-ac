@@ -88,28 +88,32 @@ class ACDevice(Device[ACState]):
             state_updated_callback,
             Constraints(
                 Constraint(
-                    ACDataPoint.SET_POINT,
-                    (ACDataPoint.MODE, {ACMode.AUTO, ACMode.VENT}),
-                    (ACDataPoint.ECO, {True}),
-                ),
-                Constraint(
-                    ACDataPoint.FAN,
-                    (ACDataPoint.MODE, {ACMode.DRY}),
-                ),
-                Constraint(
-                    ACDataPoint.FAN,
-                    (ACDataPoint.MODE, {ACMode.AUTO, ACMode.DRY}),
-                    (ACDataPoint.ECO, {True}),
-                    restrict_to={ACFanSpeed.TURBO},
-                ),
-                Constraint(
                     ACDataPoint.ECO,
-                    (ACDataPoint.MODE, {ACMode.AUTO, ACMode.DRY, ACMode.VENT}),
+                    True,
+                    (ACDataPoint.SET_POINT, None),
+                    (ACDataPoint.FAN, {ACFanSpeed.TURBO}),
+                    (ACDataPoint.SLEEP, None),
                 ),
                 Constraint(
-                    ACDataPoint.SLEEP,
-                    (ACDataPoint.MODE, {ACMode.AUTO, ACMode.VENT}),
-                    (ACDataPoint.ECO, {True}),
+                    ACDataPoint.MODE,
+                    ACMode.AUTO,
+                    (ACDataPoint.SET_POINT, None),
+                    (ACDataPoint.FAN, {ACFanSpeed.TURBO}),
+                    (ACDataPoint.ECO, None),
+                    (ACDataPoint.SLEEP, None),
+                ),
+                Constraint(
+                    ACDataPoint.MODE,
+                    ACMode.VENT,
+                    (ACDataPoint.SET_POINT, None),
+                    (ACDataPoint.ECO, None),
+                    (ACDataPoint.SLEEP, None),
+                ),
+                Constraint(
+                    ACDataPoint.MODE,
+                    ACMode.DRY,
+                    (ACDataPoint.FAN, None),
+                    (ACDataPoint.ECO, None),
                 ),
             ),
         )

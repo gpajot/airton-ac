@@ -1,7 +1,7 @@
 from typing import Dict
 
 from local_tuya import DeviceConfig, ProtocolConfig
-from local_tuya.domoticz import (
+from local_tuya_domoticz_tools import (
     Parameter,
     PluginMetadata,
     UnitId,

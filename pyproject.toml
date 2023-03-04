@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "airton_ac"
-version = "2.0.0"
+version = "2.1.0"
 description = "Control an Airton AC device over LAN."
 authors = ["Gabriel Pajot <gab@les-cactus.co>"]
 license = "MIT"
@@ -12,16 +12,20 @@ exclude = ["airton_ac/domoticz/types.py"]
 [tool.poetry.dependencies]
 python = ">=3.7,<3.12"
 
-local-tuya = ">=1.2.2,<2"
+local-tuya = ">=2,<3"
+local-tuya-domoticz-tools = { version = ">=1,<2", optional = true }
+
+[tool.poetry.extras]
+domoticz = ["local-tuya-domoticz-tools"]
 
 [tool.poetry.group.test.dependencies]
-pytest = ">=7,<8"
-pytest-asyncio = ">=0,<1"
-pytest-mock = ">=3,<4"
-ruff = ">=0,<1"
-mypy = ">=1,<2"
-black = ">=23,<24"
-pre-commit = ">=2,<3"
+pytest = "==7.2.2"
+pytest-asyncio = "==0.20.3"
+pytest-mock = "==3.10.0"
+ruff = "==0.0.254"
+mypy = "==1.1.1"
+black = "==23.1.0"
+pre-commit = "==2.21.0"
 
 [build-system]
 requires = ["poetry-core"]
