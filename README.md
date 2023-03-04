@@ -36,7 +36,7 @@ Make sure to read [plugin instructions](https://www.domoticz.com/wiki/Using_Pyth
 > 💡 The Domoticz version should be `2022.1` or higher.
 
 ```shell
-python -m pip install --upgrade airton-ac
+python -m pip install --upgrade airton-ac[domoticz]
 python -m airton_ac.domoticz.install
 ```
 Domoticz path defaults to `~/domoticz` but you can pass a `-p` option to the second command to change that:
