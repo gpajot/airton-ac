@@ -1,4 +1,3 @@
-import sys
 from typing import Dict, Union
 
 import pytest
@@ -40,10 +39,6 @@ class TestACDevice:
         mocker.patch("local_tuya.Device.__init__")
         return ACDevice(mocker.Mock())
 
-    @pytest.mark.skipif(
-        sys.version_info < (3, 8),
-        reason="requires python3.8 or higher for AsyncMock",
-    )
     @pytest.mark.parametrize(
         ("temp", "expected"),
         [
@@ -59,10 +54,6 @@ class TestACDevice:
 
         update.assert_awaited_once_with({ACDataPoint.SET_POINT: expected})
 
-    @pytest.mark.skipif(
-        sys.version_info < (3, 8),
-        reason="requires python3.8 or higher for AsyncMock",
-    )
     @pytest.mark.parametrize(
         ("swing", "expected_swing", "expected_direction"),
         [
