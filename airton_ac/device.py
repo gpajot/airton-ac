@@ -150,9 +150,9 @@ class ACDevice(Device[ACState]):
         await self._update(
             {
                 ACDataPoint.SWING: "un_down" if status else "off",
-                ACDataPoint.SWING_DIRECTION: ACDataPoint.SWING.value
-                if status
-                else "off",
+                ACDataPoint.SWING_DIRECTION: (
+                    ACDataPoint.SWING.value if status else "off"
+                ),
             }
         )
 
