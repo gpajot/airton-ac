@@ -1,8 +1,8 @@
 # airton-ac
 
-[![tests](https://github.com/gpajot/airton-ac/workflows/Test/badge.svg?branch=main&event=push)](https://github.com/gpajot/airton-ac/actions?query=workflow%3ATest+branch%3Amain+event%3Apush)
-[![version](https://img.shields.io/pypi/v/airton-ac?label=stable)](https://pypi.org/project/airton-ac/)
-[![python](https://img.shields.io/pypi/pyversions/airton-ac)](https://pypi.org/project/airton-ac/)
+[![tests](https://github.com/gpajot/airton-ac/actions/workflows/test.yml/badge.svg?branch=main&event=push)](https://github.com/gpajot/airton-ac/actions/workflows/test.yml?query=branch%3Amain+event%3Apush)
+[![version](https://img.shields.io/pypi/v/airton_ac?label=stable)](https://pypi.org/project/airton_ac/)
+[![python](https://img.shields.io/pypi/pyversions/airton_ac)](https://pypi.org/project/airton_ac/)
 
 Control an Airton AC device over LAN.
 This requires having the [wifi module](https://eu.airton.shop/en/products/kit-module-wifi-pour-climatiseurs-airton-en-wifi-ready).
