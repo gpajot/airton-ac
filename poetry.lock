@@ -117,18 +117,18 @@ typing-extensions = ">=4.10"
 
 [[package]]
 name = "local-tuya-domoticz-tools"
-version = "1.1.0"
+version = "1.1.1"
 description = "Tools to create a Domoticz plugin for local-tuya devices."
 optional = true
 python-versions = ">=3.8"
 files = [
-    {file = "local_tuya_domoticz_tools-1.1.0-py3-none-any.whl", hash = "sha256:5034c09edbcec7ca123246085799d498816de481abd443707d4970eeab85cddd"},
-    {file = "local_tuya_domoticz_tools-1.1.0.tar.gz", hash = "sha256:7b0923d338152053736a6cad4b92e31625c9eaac2e8ec2f19fbb00d50424d8c2"},
+    {file = "local_tuya_domoticz_tools-1.1.1-py3-none-any.whl", hash = "sha256:313898f80c18e48a274c6017cebb291ba9fe8187c50850c41e8a70d3a0398b59"},
+    {file = "local_tuya_domoticz_tools-1.1.1.tar.gz", hash = "sha256:d75d8bd4092b83d2d43b42f4c21a3278d63f54b6a53acdcee5af07f9298875d3"},
 ]
 
 [package.dependencies]
 concurrent-tasks = ">=1.4,<2"
-local-tuya = ">=2.1,<3"
+local-tuya = ">=2.3.1,<3"
 xmltodict = ">=0.13,<0.14"
 
 [[package]]
