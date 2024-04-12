@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "airton_ac"
-version = "2.2.0"
+version = "2.2.1"
 description = "Control an Airton AC device over LAN."
 authors = ["Gabriel Pajot <gab@les-cactus.co>"]
 license = "MIT"
