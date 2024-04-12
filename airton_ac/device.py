@@ -86,7 +86,7 @@ class ACDevice(Device[ACState]):
             config,
             ACState.load,
             state_updated_callback,
-            Constraints(
+            constraints=Constraints(
                 Constraint(
                     ACDataPoint.ECO,
                     True,
