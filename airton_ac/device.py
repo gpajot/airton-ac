@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Optional
 
 from local_tuya import (
     Constraint,
@@ -77,15 +76,10 @@ class ACState(State):
 
 
 class ACDevice(Device[ACState]):
-    def __init__(
-        self,
-        config: DeviceConfig,
-        state_updated_callback: Optional[Callable[[ACState], Any]] = None,
-    ):
+    def __init__(self, config: DeviceConfig):
         super().__init__(
             config,
             ACState.load,
-            state_updated_callback,
             constraints=Constraints(
                 Constraint(
                     ACDataPoint.ECO,
