@@ -34,7 +34,7 @@ def test_state_load():
 
 
 class TestACDevice:
-    @pytest.fixture()
+    @pytest.fixture
     def device(self, mocker):
         mocker.patch("local_tuya.Device.__init__")
         return ACDevice(mocker.Mock())
