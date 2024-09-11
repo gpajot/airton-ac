@@ -19,7 +19,7 @@ local-tuya-domoticz-tools = { version = ">=1.2,<2", optional = true }
 domoticz = ["local-tuya-domoticz-tools"]
 
 [tool.poetry.group.test.dependencies]
-pytest = "==8.3.2"
+pytest = "==8.3.3"
 pytest-asyncio = "==0.24.0"
 pytest-mock = "==3.14.0"
 ruff = "==0.6.4"
