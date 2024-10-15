@@ -10,7 +10,7 @@ include = ["airton_ac/py.typed"]
 exclude = ["airton_ac/domoticz/types.py"]
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.9"
 
 local-tuya = ">=3,<4"
 local-tuya-domoticz-tools = { version = ">=1.2,<2", optional = true }
